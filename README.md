@@ -2,7 +2,7 @@
 
 This is an experimental script that I'm using to submit jobs to the LHC grid.
 
-Using [gevent](http://www.gevent.org/), the Dirac API is converted into an async API that allows you to submit and monitor jobs concurrently.
+Using [gevent](http://www.gevent.org/), the [Dirac](http://diracgrid.org/) API is converted into an async API that allows you to submit and monitor jobs concurrently.
 Although the script runs in a single thread, it submits, monitors and downloads jobs in parallel.
 
 [LevelDB](https://github.com/google/leveldb) is used to persist job information to disk, so that it's not lost between closing and running the script.
