@@ -69,3 +69,65 @@ Careful, like the Dirac API, this tool does *not* hold your hand at all when it 
 It is only recommended for users who absolutely know what they are doing.
 Make sure that your configuration is sound and test it before submission.
 
+## How do I run LHCb software?
+
+Create a script (e.g. `job.sh`) and initialize the LHCb software like this:
+```bash
+#!/bin/sh
+
+source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh
+lb-run DaVinci v38r0 gaudirun.py options.py
+```
+You can then run your script as part of the job
+```python
+j = Job()
+j.setExecutable('job.sh')
+j.setInputSandbox(['options.py'])
+```
+Don't forget to put the options file in your input sandbox (as above).
+
+## How do I run customized LHCb software?
+
+If you're using CMake to compile your software and you have a Dev directory like `DaVinciDev_v38r0`,
+make sure to compile your software, and then zip up the Dev directory and all your inputs like this:
+
+```bash
+zip -r job.zip DaVinciDev_v38r0 options.py
+```
+
+In your `job.sh`, you have to unzip the directory and simply use the `run` script in the Dev directory like this:
+```bash
+#!/bin/sh
+
+source /cvmfs/lhcb.cern.ch/lib/LbLogin.sh
+
+unzip job.zip
+
+DaVinciDev_v38r0/run gaudirun.py options.py
+```
+
+You can declare the `job.zip` as part of your input sandbox:
+```python
+j.setInputSandbox(['job.zip'])
+```
+
+If you want to submit your jobs faster, or if the input sandbox would be quite large, it can make sense to upload the `job.zip`
+to EOS and download it from your grid job using `xrdcp`.
+
+## How do I customize my options per job?
+
+You can pass command line arguments to the `job.sh` and add additional configuration inside `job.sh` like this:
+```bash
+echo "DaVinci().EvtMax = $1" >> options.py
+```
+Here `$1` is the first argument passed to `job.sh`.
+Your `job.py` could look like this:
+```python
+for i in range(100):
+    evt_max = compute_evt_max(i)
+    j = Job()
+    j.setExecutable('job.sh {}'.format(evt_max))
+    j.setName('Job {}'.format(i))
+    submit(j)
+```
+
