@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 
 from __future__ import print_function
 
@@ -105,6 +106,15 @@ def submit_command(args):
 
 def watch_command(args):
     pass
+
+def bkQuery(path):
+    from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb
+    diracLHCb = DiracLHCb()
+    resp = diracLHCb.bkQueryPath(path) #""
+    lumi = resp['Value']['Summary']['Luminosity'] / 1e9
+    print('Path contains data with total luminosity of {} fb^{{-1}}'.format(lumi))
+    lfns = resp['Value']['LFNs'].keys()
+    return lfns
 
 def print_summary():
     counter = collections.Counter()
