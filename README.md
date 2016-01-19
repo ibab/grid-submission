@@ -149,7 +149,7 @@ resp = diracLHCb.bkQueryPath(path)
 lfns = resp['Values']['LFNs'].keys()
 ```
 
-## How do I split my files by LFNs?
+## How do I split my jobs by LFNs?
 
 Dirac allows you to split your input files into groups of a desired maximum size,
 where each group only contains LFNs from a certain storage element.
