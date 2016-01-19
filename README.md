@@ -145,7 +145,7 @@ Feel free to access the LHCbDirac API directly inside your job script if you nee
 ```python
 from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb
 diracLHCb = DiracLHCb()
-resp = diracLHCb.bkQueryPath(path) #""
+resp = diracLHCb.bkQueryPath(path)
 lfns = resp['Values']['LFNs'].keys()
 ```
 
