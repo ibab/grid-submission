@@ -131,3 +131,43 @@ for i in range(100):
     submit(j)
 ```
 
+## How do I access files registered in the LHCb Bookkeeping?
+
+A `bkQuery` function is defined inside your job script.
+When passed a bookkeeping path, it will return all LFNs for that path.
+
+Example:
+```python
+lfns = bkQuery("/LHCb/Collision15/Beam6500GeV-VeloClosed-MagDown/Real Data/Reco15a/Stripping23r1/90000000/CHARMCOMPLETEEVENT.DST")
+```
+
+Feel free to access the LHCbDirac API directly inside your job script if you need more flexibility:
+```python
+from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb
+diracLHCb = DiracLHCb()
+resp = diracLHCb.bkQueryPath(path) #""
+lfns = resp['Values']['LFNs'].keys()
+```
+
+## How do I split my files by LFNs?
+
+Dirac allows you to split your input files into groups of a desired maximum size,
+where each group only contains LFNs from a certain storage element.
+
+Use the Dirac API:
+```python
+groups = dirac.splitInputData(lfns, maxFilesPerJob=10)['Values']
+```
+`groups` is now a list of lists containing the LFNs.
+In order to set these, you can use
+```python
+for group in groups:
+    j = Job()
+    ...
+    j.setInputData(group)
+    ...
+    submit(j)
+```
+Careful: You have to make sure that the right LFNs are used by DaVinci as well.
+For example, you could write them to a Python file that is different per job.
+
