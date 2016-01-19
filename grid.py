@@ -74,9 +74,16 @@ def download_():
         print('Downloading job {}'.format(jid))
         try:
             output = gevent.subprocess.check_output(["dirac-wms-job-get-output", str(jid)])
-            if not os.path.exists('succeeded'):
-                os.mkdir('succeeded')
-            shutil.move(str(jid), 'succeeded/{}'.format(jid))
+            if obj['status'] == 'Done':
+                if not os.path.exists('succeeded'):
+                    os.mkdir('succeeded')
+                shutil.move(str(jid), 'succeeded/{}'.format(jid))
+            elif obj['status'] == 'Failed':
+                if not os.path.exists('failed'):
+                    os.mkdir('failed')
+                shutil.move(str(jid), 'failed/{}'.format(jid))
+            else:
+                raise ValueError('Unfinished job pushed to Download queue')
             obj['downloaded'] = True
         except:
             obj['status'] = 'Failed'
