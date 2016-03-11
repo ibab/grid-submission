@@ -26,6 +26,8 @@ import collections
 import shutil
 import os
 
+from dirac import bk_query, split_input_data
+
 submitting_group = gevent.pool.Group()
 submitting = gevent.queue.Queue()
 monitoring_group = gevent.pool.Group()
@@ -106,15 +108,6 @@ def submit_command(args):
 
 def watch_command(args):
     pass
-
-def bkQuery(path):
-    from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb
-    diracLHCb = DiracLHCb()
-    resp = diracLHCb.bkQueryPath(path) #""
-    lumi = resp['Value']['Summary']['Luminosity'] / 1e9
-    print('Path contains data with total luminosity of {} fb^{{-1}}'.format(lumi))
-    lfns = resp['Value']['LFNs'].keys()
-    return lfns
 
 def print_summary():
     counter = collections.Counter()
