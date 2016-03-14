@@ -3,9 +3,14 @@
 
 from __future__ import print_function
 
+import os
+
 from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb
 
-__all__ = ['DiracException', 'split_input_data']
+__all__ = ['DiracException',
+           'bk_query',
+           'split_input_data',
+           'get_job_output']
 
 
 class DiracException(Exception):
@@ -67,6 +72,35 @@ def split_input_data(lfns, max_files_per_job=10):
     if not res['OK']:
         raise DiracException(res['Message'])
     return res['Value']
+
+
+def get_job_output(job_id, output_folder):
+    """Download output sandbox for the given job.
+
+    This functions wraps `getOutputSandbox` and it downloads
+    the output sandbox in output_folder/job_id.
+
+    Arguments:
+        job_id (int): Job ID to download the output sandbox from.
+        output_folder (str): Folder to download the sandbox to.
+            If it doesn't exist, it is created.
+
+    Returns:
+        str: Output folder.
+
+    Raises:
+        DiracException: If the call to the API fails.
+
+    """
+    output_folder = os.path.abspath(output_folder)
+    if not os.path.isdir(output_folder):
+        os.makedirs(output_folder)
+    res = DiracLHCb().getOutputSandbox(job_id,
+                                       outputDir=output_folder,
+                                       noJobDir=False)
+    if not res['OK']:
+        raise DiracException(res['Message'])
+    return os.path.join(output_folder, str(job_id))
 
 # EOF
 

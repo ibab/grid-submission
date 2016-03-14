@@ -18,15 +18,16 @@ Script.parseCommandLine(ignoreErrors = False)
 from DIRAC.Interfaces.API.Job import Job
 from DIRAC.Interfaces.API.Dirac import Dirac
 
-import leveldb
-db = leveldb.LevelDB('./jobs.db')
 import argparse
 import json
 import collections
 import shutil
 import os
+WORKDIR = os.getcwd()
+import leveldb
+db = leveldb.LevelDB(os.path.join(WORKDIR, 'jobs.db'))
 
-from dirac import bk_query, split_input_data
+from dirac import bk_query, split_input_data, get_job_output
 
 submitting_group = gevent.pool.Group()
 submitting = gevent.queue.Queue()
@@ -42,7 +43,10 @@ def submit_():
         resp = dirac.submit(j)
         jid = resp['JobID']
 
-        obj = {'jid': jid, 'status': 'Submitted', 'downloaded': False}
+        obj = {'jid': jid,
+               'status': 'Submitted',
+               'downloaded': False,
+               'download_retries': 1}
 
         db.Put(bytes(jid), json.dumps(obj))
         monitoring.put(obj)
@@ -71,33 +75,43 @@ def monitor_():
             monitoring.put(obj)
 
 def download_():
+    done_folder = os.path.join(WORKDIR, 'succeeded')
+    failed_folder = os.path.join(WORKDIR, 'failed')
     while True:
         obj = downloading.get()
         jid = obj['jid']
         print('Downloading job {}'.format(jid))
         try:
-            output = gevent.subprocess.check_output(["dirac-wms-job-get-output", str(jid)])
+            output_folder = get_job_output(jid, WORKDIR)
             if obj['status'] == 'Done':
-                if not os.path.exists('succeeded'):
-                    os.mkdir('succeeded')
-                shutil.move(str(jid), 'succeeded/{}'.format(jid))
+                if not os.path.exists(done_folder):
+                    os.mkdir(done_folder)
+                shutil.move(output_folder,
+                            os.path.join(done_folder, str(jid)))
             elif obj['status'] == 'Failed':
-                if not os.path.exists('failed'):
-                    os.mkdir('failed')
-                shutil.move(str(jid), 'failed/{}'.format(jid))
+                if not os.path.exists(failed_folder):
+                    os.mkdir(failed_folder)
+                shutil.move(output_folder,
+                            os.path.join(failed_folder, str(jid)))
             else:
                 raise ValueError('Unfinished job pushed to Download queue')
             obj['downloaded'] = True
+            print('Downloaded job {}'.format(jid))
         except:
-            obj['status'] = 'Failed'
-            if not os.path.exists('failed'):
-                os.mkdir('failed')
-            shutil.move(str(jid), 'failed/{}'.format(jid))
-            obj['downloaded'] = False
             print('Could not download output of job {}'.format(jid))
-
+            if obj['download_retries'] > 0:
+                obj['download_retries'] -= 1
+                downloading.put(obj)
+                print('Retrying download of job {} later'.format(jid))
+            else:
+                obj['status'] = 'Failed'
+                if not os.path.exists(failed_folder):
+                    os.mkdir(failed_folder)
+                if os.path.exists(os.path.join(WORKDIR, str(jid))):
+                    shutil.move(os.path.join(WORKDIR, str(jid)),
+                                os.path.join(failed_folder, str(jid)))
+                obj['downloaded'] = False
         db.Put(bytes(jid), json.dumps(obj))
-        print('Downloaded job {}'.format(jid))
 
 # To be called by the submission script
 def submit(j):
