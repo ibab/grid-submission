@@ -1,6 +1,6 @@
 
 <div align="center">
-<img src="nomoretears.png" width="400px"/>
+<img src="nomoretears.png" width="300px"/>
 </div>
 
 # Experimental Grid Submission Tool
