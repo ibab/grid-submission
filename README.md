@@ -1,8 +1,4 @@
 
-<div align="center">
-<img src="nomoretears.png" width="300px"/>
-</div>
-
 # Experimental Grid Submission Tool
 
 This is an experimental script that I'm using to submit jobs to the LHC grid.
